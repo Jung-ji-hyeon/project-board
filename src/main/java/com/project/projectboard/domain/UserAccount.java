@@ -32,27 +32,6 @@ public class UserAccount extends AuditingFields {
 
     protected UserAccount() {}
 
-    @Setter
-    @Column(nullable = false, length = 50)
-    private String userId;
-    @Setter
-    @Column(nullable = false)
-    private String userPassword;
-
-    @Setter
-    @Column(length = 100)
-    private String email;
-    @Setter
-    @Column(length = 100)
-    private String nickname;
-    @Setter
-    private String memo;
-
-
-    protected UserAccount() {
-    }
-
-
     private UserAccount(String userId, String userPassword, String email, String nickname, String memo) {
         this.userId = userId;
         this.userPassword = userPassword;
