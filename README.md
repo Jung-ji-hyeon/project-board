@@ -36,7 +36,7 @@ Spring Boot
 
 ## 데모 페이지
 
-* https://project-board-hyeon-bd1a814fd65f.herokuapp.com/
+* https://project-board-hyeon-e31a07c9b843.herokuapp.com/
 
 ## Reference
 
