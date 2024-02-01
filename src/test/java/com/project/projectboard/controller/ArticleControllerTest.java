@@ -5,6 +5,7 @@ import com.project.projectboard.domain.constant.FormStatus;
 import com.project.projectboard.domain.constant.SearchType;
 import com.project.projectboard.dto.ArticleDto;
 import com.project.projectboard.dto.ArticleWithCommentsDto;
+import com.project.projectboard.dto.HashtagDto;
 import com.project.projectboard.dto.UserAccountDto;
 import com.project.projectboard.dto.request.ArticleRequest;
 import com.project.projectboard.dto.response.ArticleResponse;
@@ -39,16 +40,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-;
-
 @DisplayName("View 컨트롤러 - 게시글")
 @Import({TestSecurityConfig.class, FormDataEncoder.class})
 @WebMvcTest(ArticleController.class)
 class ArticleControllerTest {
 
     private final MockMvc mvc;
-    private final FormDataEncoder formDataEncoder;
 
+    private final FormDataEncoder formDataEncoder;
 
     @MockBean private ArticleService articleService;
     @MockBean private PaginationService paginationService;
@@ -62,37 +61,41 @@ class ArticleControllerTest {
         this.formDataEncoder = formDataEncoder;
     }
 
-    @DisplayName("[view] [GET] 게시글 리스트 (게시판) 페이지 - 정상 호출")
+
+    @DisplayName("[view][GET] 게시글 리스트 (게시판) 페이지 - 정상 호출")
     @Test
     void givenNothing_whenRequestingArticlesView_thenReturnsArticlesView() throws Exception {
-
         // Given
-        given(articleService.searchArticles(eq(null), eq(null), any(Pageable.class))).willReturn(Page.empty());        // When & Then
-        given(paginationService.getPaginationBarNumbers(anyInt(), anyInt())).willReturn(List.of(0, 1, 2, 3, 4));        // When & Then
+        given(articleService.searchArticles(eq(null), eq(null), any(Pageable.class))).willReturn(Page.empty());
+        given(paginationService.getPaginationBarNumbers(anyInt(), anyInt())).willReturn(List.of(0, 1, 2, 3, 4));
 
+        // When & Then
         mvc.perform(get("/articles"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
                 .andExpect(view().name("articles/index"))
                 .andExpect(model().attributeExists("articles"))
-                .andExpect(model().attributeExists("paginationBarNumbers"));
+                .andExpect(model().attributeExists("paginationBarNumbers"))
+                .andExpect(model().attributeExists("searchTypes"))
+                .andExpect(model().attribute("searchTypeHashtag", SearchType.HASHTAG));
         then(articleService).should().searchArticles(eq(null), eq(null), any(Pageable.class));
         then(paginationService).should().getPaginationBarNumbers(anyInt(), anyInt());
     }
 
-    @DisplayName("[view] [GET] 게시글 리스트 (게시판) 페이지 - 검색어와 함께 호출")
+    @DisplayName("[view][GET] 게시글 리스트 (게시판) 페이지 - 검색어와 함께 호출")
     @Test
     void givenSearchKeyword_whenSearchingArticlesView_thenReturnsArticlesView() throws Exception {
-
         // Given
         SearchType searchType = SearchType.TITLE;
         String searchValue = "title";
-        given(articleService.searchArticles(eq(searchType), eq(searchValue), any(Pageable.class))).willReturn(Page.empty());        // When & Then
-        given(paginationService.getPaginationBarNumbers(anyInt(), anyInt())).willReturn(List.of(0, 1, 2, 3, 4));        // When & Then
+        given(articleService.searchArticles(eq(searchType), eq(searchValue), any(Pageable.class))).willReturn(Page.empty());
+        given(paginationService.getPaginationBarNumbers(anyInt(), anyInt())).willReturn(List.of(0, 1, 2, 3, 4));
 
-        mvc.perform(get("/articles")
-                        .queryParam("searchType", searchType.name())
-                        .queryParam("searchValue", searchValue)
+        // When & Then
+        mvc.perform(
+                        get("/articles")
+                                .queryParam("searchType", searchType.name())
+                                .queryParam("searchValue", searchValue)
                 )
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
@@ -103,10 +106,9 @@ class ArticleControllerTest {
         then(paginationService).should().getPaginationBarNumbers(anyInt(), anyInt());
     }
 
-
     @DisplayName("[view][GET] 게시글 리스트 (게시판) 페이지 - 페이징, 정렬 기능")
     @Test
-    void givenPagingAndSortingParams_whenSearchingArticlesPage_thenReturnsArticlesView() throws Exception {
+    void givenPagingAndSortingParams_whenSearchingArticlesView_thenReturnsArticlesView() throws Exception {
         // Given
         String sortName = "title";
         String direction = "desc";
@@ -119,10 +121,10 @@ class ArticleControllerTest {
 
         // When & Then
         mvc.perform(
-                get("/articles")
-                        .queryParam("page", String.valueOf(pageNumber))
-                        .queryParam("size", String.valueOf(pageSize))
-                        .queryParam("sort", sortName + "," + direction)
+                        get("/articles")
+                                .queryParam("page", String.valueOf(pageNumber))
+                                .queryParam("size", String.valueOf(pageSize))
+                                .queryParam("sort", sortName + "," + direction)
                 )
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
@@ -136,9 +138,8 @@ class ArticleControllerTest {
     @DisplayName("[view][GET] 게시글 페이지 - 인증 없을 땐 로그인 페이지로 이동")
     @Test
     void givenNothing_whenRequestingArticlePage_thenRedirectsToLoginPage() throws Exception {
-
         // Given
-        Long articleId = 1L;
+        long articleId = 1L;
 
         // When & Then
         mvc.perform(get("/articles/" + articleId))
@@ -146,38 +147,35 @@ class ArticleControllerTest {
                 .andExpect(redirectedUrlPattern("**/login"));
         then(articleService).shouldHaveNoInteractions();
         then(articleService).shouldHaveNoInteractions();
-
     }
 
     @WithMockUser
     @DisplayName("[view][GET] 게시글 페이지 - 정상 호출, 인증된 사용자")
     @Test
-    void givenNothing_whenRequestingArticleView_thenReturnsArticleView() throws Exception {
-
+    void givenAuthorizedUser_whenRequestingArticleView_thenReturnsArticleView() throws Exception {
         // Given
         Long articleId = 1L;
-        Long totalCount = 1L;
+        long totalCount = 1L;
         given(articleService.getArticleWithComments(articleId)).willReturn(createArticleWithCommentsDto());
         given(articleService.getArticleCount()).willReturn(totalCount);
 
         // When & Then
         mvc.perform(get("/articles/" + articleId))
                 .andExpect(status().isOk())
-                .andExpect(view().name("articles/detail"))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
+                .andExpect(view().name("articles/detail"))
                 .andExpect(model().attributeExists("article"))
                 .andExpect(model().attributeExists("articleComments"))
-                .andExpect(model().attribute("totalCount", totalCount));
+                .andExpect(model().attribute("totalCount", totalCount))
+                .andExpect(model().attribute("searchTypeHashtag", SearchType.HASHTAG));
         then(articleService).should().getArticleWithComments(articleId);
         then(articleService).should().getArticleCount();
-
     }
 
     @Disabled("구현 중")
-    @DisplayName("[view] [GET] 게시글 검색 전용 페이지 - 정상 호출")
+    @DisplayName("[view][GET] 게시글 검색 전용 페이지 - 정상 호출")
     @Test
     void givenNothing_whenRequestingArticleSearchView_thenReturnsArticleSearchView() throws Exception {
-
         // Given
 
         // When & Then
@@ -240,7 +238,7 @@ class ArticleControllerTest {
     @WithMockUser
     @DisplayName("[view][GET] 새 게시글 작성 페이지")
     @Test
-    void givenAuthorizedUser_whenRequesting_thenReturnsNewArticlePage() throws Exception {
+    void givenNothing_whenRequesting_thenReturnsNewArticlePage() throws Exception {
         // Given
 
         // When & Then
@@ -256,7 +254,7 @@ class ArticleControllerTest {
     @Test
     void givenNewArticleInfo_whenRequesting_thenSavesNewArticle() throws Exception {
         // Given
-        ArticleRequest articleRequest = ArticleRequest.of("new title", "new content", "#new");
+        ArticleRequest articleRequest = ArticleRequest.of("new title", "new content");
         willDoNothing().given(articleService).saveArticle(any(ArticleDto.class));
 
         // When & Then
@@ -288,7 +286,7 @@ class ArticleControllerTest {
     @WithMockUser
     @DisplayName("[view][GET] 게시글 수정 페이지 - 정상 호출, 인증된 사용자")
     @Test
-    void givenNothing_whenRequesting_thenReturnsUpdatedArticlePage() throws Exception {
+    void givenAuthorizedUser_whenRequesting_thenReturnsUpdatedArticlePage() throws Exception {
         // Given
         long articleId = 1L;
         ArticleDto dto = createArticleDto();
@@ -310,7 +308,7 @@ class ArticleControllerTest {
     void givenUpdatedArticleInfo_whenRequesting_thenUpdatesNewArticle() throws Exception {
         // Given
         long articleId = 1L;
-        ArticleRequest articleRequest = ArticleRequest.of("new title", "new content", "#new");
+        ArticleRequest articleRequest = ArticleRequest.of("new title", "new content");
         willDoNothing().given(articleService).updateArticle(eq(articleId), any(ArticleDto.class));
 
         // When & Then
@@ -353,7 +351,7 @@ class ArticleControllerTest {
                 createUserAccountDto(),
                 "title",
                 "content",
-                "#java"
+                Set.of(HashtagDto.of("java"))
         );
     }
 
@@ -364,25 +362,26 @@ class ArticleControllerTest {
                 Set.of(),
                 "title",
                 "content",
-                "#java",
+                Set.of(HashtagDto.of("java")),
                 LocalDateTime.now(),
-                "jung",
+                "uno",
                 LocalDateTime.now(),
-                "jung"
+                "uno"
         );
     }
 
     private UserAccountDto createUserAccountDto() {
         return UserAccountDto.of(
-                "jung",
+                "uno",
                 "pw",
-                "jung@mail.com",
-                "Jung",
+                "uno@mail.com",
+                "Uno",
                 "memo",
                 LocalDateTime.now(),
-                "jung",
+                "uno",
                 LocalDateTime.now(),
-                "jung"
+                "uno"
         );
     }
+
 }
