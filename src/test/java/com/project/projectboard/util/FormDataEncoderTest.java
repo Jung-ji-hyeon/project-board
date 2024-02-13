@@ -1,7 +1,6 @@
 package com.project.projectboard.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +10,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-@Disabled("오류로 인한 제외")
 @DisplayName("테스트 도구 - Form 데이터 인코더")
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.NONE,
