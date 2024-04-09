@@ -42,5 +42,6 @@ Spring Boot
 
 * 유즈케이스 다이어그램: https://github.com/Jung-ji-hyeon/project-board/issues/4
 * API Endpoint 구글 시트: https://github.com/Jung-ji-hyeon/project-board/issues/1
+* erd : https://github.com/Jung-ji-hyeon/project-board/issues/61
 
 
